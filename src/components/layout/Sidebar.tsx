@@ -8,8 +8,8 @@ import {
   Shield,
   Users,
   FileCheck,
-  FlaskConical,
-  Microscope,
+  Brain,
+  FileEdit,
   BarChart3,
   Activity,
   PanelLeftClose,
@@ -25,22 +25,19 @@ interface NavItem {
 
 const NAV_SECTIONS: Array<{ title: string; items: NavItem[] }> = [
   {
-    title: 'WORKSPACE',
-    items: [
-      { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
-    ],
-  },
-  {
     title: 'INTEGRATION',
     items: [
-      { label: 'Schema Explorer', path: '/schema-explorer', icon: <Table2 size={18} /> },
-      { label: 'Concept Map', path: '/concept-map', icon: <GitBranch size={18} />, module: 'payerCriteria' },
-      { label: 'Payer Criteria', path: '/payer-criteria', icon: <Shield size={18} />, module: 'payerCriteria' },
+      { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
+      { label: 'Schema', path: '/schema-explorer', icon: <Table2 size={18} /> },
+      { label: 'Concepts', path: '/concept-map', icon: <GitBranch size={18} />, module: 'payerCriteria' },
+      { label: 'Pipeline', path: '/pipeline-health', icon: <Activity size={18} /> },
     ],
   },
   {
-    title: 'CLINICAL',
+    title: 'OPERATIONS',
     items: [
+      { label: 'KPI Dashboard', path: '/kpi-dashboard', icon: <BarChart3 size={18} />, module: 'kpiDashboard' },
+      { label: 'Payer Criteria', path: '/payer-criteria', icon: <Shield size={18} />, module: 'payerCriteria' },
       { label: 'Patient Records', path: '/patient-records', icon: <Users size={18} />, module: 'paWorkbench' },
       { label: 'PA Workbench', path: '/pa-workbench', icon: <FileCheck size={18} />, module: 'paWorkbench' },
     ],
@@ -48,15 +45,8 @@ const NAV_SECTIONS: Array<{ title: string; items: NavItem[] }> = [
   {
     title: 'ANALYTICS',
     items: [
-      { label: 'Model Builder', path: '/model-builder', icon: <FlaskConical size={18} />, module: 'analytics' },
-      { label: 'Annotation Studio', path: '/annotation-studio', icon: <Microscope size={18} />, module: 'analytics' },
-      { label: 'KPI Dashboard', path: '/kpi-dashboard', icon: <BarChart3 size={18} />, module: 'kpiDashboard' },
-    ],
-  },
-  {
-    title: 'SYSTEM',
-    items: [
-      { label: 'Pipeline Health', path: '/pipeline-health', icon: <Activity size={18} /> },
+      { label: 'Annotation Studio', path: '/annotation-studio', icon: <FileEdit size={18} />, module: 'analytics' },
+      { label: 'Model Builder', path: '/model-builder', icon: <Brain size={18} />, module: 'analytics' },
     ],
   },
 ];
