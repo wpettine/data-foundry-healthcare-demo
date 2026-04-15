@@ -8,9 +8,22 @@ const heroSchemaDrift: PipelineAlert = {
   systemName: 'Site 12 — eClinicalWorks',
   description:
     "Field 'adj_type' renamed to 'adjustment_category' — 3 concept mappings affected. Auto-remapped at 97% confidence.",
+  impact: '3 concept mappings',
   timestamp: '2026-03-18T14:32:00Z',
   severity: 'warning',
   resolved: false,
+  detail: {
+    type: 'schema-change',
+    fieldBefore: 'adj_type',
+    fieldAfter: 'adjustment_category',
+    affectedMappings: [
+      { conceptId: 'adj-001', conceptLabel: 'Contractual Adjustment', confidence: 0.97 },
+      { conceptId: 'adj-002', conceptLabel: 'Prompt Pay Discount', confidence: 0.96 },
+      { conceptId: 'adj-003', conceptLabel: 'Withhold Adjustment', confidence: 0.95 },
+    ],
+    autoRemapped: true,
+    remappingConfidence: 0.97,
+  },
 };
 
 const heroCriteriaUpdate: PipelineAlert = {
@@ -20,9 +33,19 @@ const heroCriteriaUpdate: PipelineAlert = {
   systemName: 'BCBS MA',
   description:
     'TKA coverage criteria updated — Conservative therapy duration changed from ≥3 months to ≥90 days PT + ≥30 days NSAID. 4 active cases affected.',
+  impact: '4 active cases',
   timestamp: '2026-03-17T09:15:00Z',
   severity: 'critical',
   resolved: false,
+  detail: {
+    type: 'criteria-update',
+    payerName: 'BCBS MA',
+    criterionName: 'Conservative therapy duration',
+    valueBefore: '≥3 months documented conservative treatment',
+    valueAfter: '≥90 days supervised PT + ≥30 days NSAID trial',
+    affectedCases: 4,
+    effectiveDate: '2026-04-01',
+  },
 };
 
 const fillerAlerts: PipelineAlert[] = [
@@ -55,6 +78,7 @@ const fillerAlerts: PipelineAlert[] = [
     systemName: 'Site 8 — ModMed',
     description:
       '12 CPT codes in ModMed billing export have no concept mapping. Most frequent: 29881 (knee arthroscopy, meniscectomy).',
+    impact: '12 CPT codes',
     timestamp: '2026-03-17T16:45:00Z',
     severity: 'warning',
     resolved: false,
@@ -88,6 +112,7 @@ const fillerAlerts: PipelineAlert[] = [
     systemName: 'Site 14 — WebPT',
     description:
       'NULL rate for PT visit notes field increased from 2% to 11% since 2026-03-10. 47 records affected.',
+    impact: '47 records',
     timestamp: '2026-03-15T09:20:00Z',
     severity: 'warning',
     resolved: true,
