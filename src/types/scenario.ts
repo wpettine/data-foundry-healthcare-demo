@@ -4,7 +4,7 @@ import type { PACase } from './pa';
 import type { PayerCriteria, PayerDivergence } from './payer';
 import type { ModelProject, TrainingRecord } from './model';
 import type { BiometricStreamSet, ClinicalEvent } from './clinical';
-import type { AIFinding } from './annotation';
+import type { AIFinding, PatientReasoningNarrative } from './annotation';
 import type { PipelineAlert } from './pipeline';
 import type { KPIDashboardData } from './kpi';
 
@@ -46,6 +46,7 @@ export interface AnalyticsModuleData {
   biometricStreams: BiometricStreamSet;
   clinicalEvents: ClinicalEvent[];
   aiFindings: AIFinding[];
+  patientReasoningNarratives: PatientReasoningNarrative[];
 }
 
 export interface CompanyInfo {
@@ -82,10 +83,12 @@ export interface TopologyEdge {
 }
 
 export interface PayerCriteriaSet {
+  patientId: string; // Single patient being evaluated
+  procedureType: string; // Procedure requiring authorization (e.g., "TKA")
   payers: PayerCriteria[];
-  procedures: string[];
+  procedures: string[]; // Kept for backward compatibility
   divergences: PayerDivergence[];
-  patients: Patient[]; // Patients referenced in payer criteria
+  patients: Patient[]; // Patient lookup (typically contains just the evaluated patient)
 }
 
 export interface ScenarioSnapshot {

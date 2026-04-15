@@ -1,10 +1,12 @@
 import type { Patient } from '../../types/patient';
+import type { SourceSystem } from '../../types/system';
 
 interface PatientInfoPanelProps {
   patient: Patient;
+  systems?: SourceSystem[];
 }
 
-export function PatientInfoPanel({ patient }: PatientInfoPanelProps) {
+export function PatientInfoPanel({ patient, systems = [] }: PatientInfoPanelProps) {
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
       {/* Demographics */}
@@ -58,15 +60,31 @@ export function PatientInfoPanel({ patient }: PatientInfoPanelProps) {
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
             Medications
           </h3>
-          <ul className="space-y-1">
-            {patient.medications.map((med, i) => (
-              <li key={i} className="text-sm text-gray-700">
-                <span className="font-medium">{med.name}</span>
-                <span className="ml-1 font-[JetBrains_Mono] text-xs text-gray-500">
-                  {med.dose} {med.frequency}
-                </span>
-              </li>
-            ))}
+          <ul className="space-y-2">
+            {patient.medications.map((med, i) => {
+              const system = systems.find((s) => s.id === med.sourceSystemId);
+              return (
+                <li key={i} className="text-sm">
+                  <div>
+                    <span className="font-medium text-gray-900">{med.name}</span>
+                    <span className="ml-1 font-[JetBrains_Mono] text-xs text-gray-500">
+                      {med.dose} {med.frequency}
+                    </span>
+                  </div>
+                  {system && (
+                    <span
+                      className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
+                      style={{
+                        backgroundColor: `${system.accentColor}15`,
+                        color: system.accentColor,
+                      }}
+                    >
+                      {system.name}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
@@ -96,15 +114,32 @@ export function PatientInfoPanel({ patient }: PatientInfoPanelProps) {
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
             Pre-Op Values
           </h3>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            {Object.entries(patient.preOpValues).map(([key, val]) => (
-              <div key={key} className="flex items-baseline justify-between">
-                <span className="text-xs text-gray-500">{key}</span>
-                <span className="font-[JetBrains_Mono] text-xs font-medium text-gray-900">
-                  {val}
-                </span>
-              </div>
-            ))}
+          <div className="space-y-2">
+            {Object.entries(patient.preOpValues).map(([key, val]) => {
+              const valueData = typeof val === 'string' ? { value: val } : val;
+              const system = systems.find((s) => s.id === valueData.sourceSystemId);
+              return (
+                <div key={key}>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-gray-500">{key}</span>
+                    <span className="font-[JetBrains_Mono] text-xs font-medium text-gray-900">
+                      {valueData.value}
+                    </span>
+                  </div>
+                  {system && (
+                    <span
+                      className="mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium"
+                      style={{
+                        backgroundColor: `${system.accentColor}15`,
+                        color: system.accentColor,
+                      }}
+                    >
+                      {system.name}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

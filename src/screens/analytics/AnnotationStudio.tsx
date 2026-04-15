@@ -7,15 +7,12 @@ import { PatientInfoPanel } from '../../components/clinical/PatientInfoPanel';
 import { TimeSeriesChart } from '../../components/visualization/TimeSeriesChart';
 import { ClinicalEventsTimeline } from '../../components/clinical/ClinicalEventsTimeline';
 import { FindingCard } from '../../components/data-display/FindingCard';
-import { ClinicalEventCard } from '../../components/data-display/ClinicalEventCard';
 import { ReasoningNarrative } from '../../components/clinical/ReasoningNarrative';
 import { useAnnotationStore } from '../../store/annotationStore';
 import type { AnnotationTab } from '../../store/annotationStore';
 
 const TABS: { key: AnnotationTab; label: string }[] = [
-  { key: 'timeline', label: 'Timeline' },
-  { key: 'events', label: 'Events' },
-  { key: 'findings', label: 'Findings' },
+  { key: 'findings', label: 'AI Findings' },
   { key: 'reasoning', label: 'Reasoning' },
 ];
 
@@ -50,11 +47,6 @@ export default function AnnotationStudio() {
     [patients, selectedPatientId],
   );
 
-  // Build system color map for event cards
-  const systemColorMap = useMemo(
-    () => new Map(systems.map((s) => [s.id, s.accentColor])),
-    [systems],
-  );
 
   // Derive finding statuses from store
   const findingsWithStatus = useMemo(() => {
@@ -66,11 +58,6 @@ export default function AnnotationStudio() {
     });
   }, [analytics, approvedFindingIds, rejectedFindingIds]);
 
-  const selectedFinding = useMemo(
-    () => findingsWithStatus.find((f) => f.id === selectedFindingId) ?? null,
-    [findingsWithStatus, selectedFindingId],
-  );
-
   if (!analytics) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -78,23 +65,29 @@ export default function AnnotationStudio() {
   const { biometricStreams, clinicalEvents } = analytics;
 
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-hidden">
-      <PanelGroup>
+    <div className="h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
+      {/* Horizontal patient strip above panels */}
+      <div className="border-b border-gray-200 bg-white px-4 py-2 flex-shrink-0">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          Monitoring Queue
+        </h3>
+        <PatientSwitcher
+          patients={patients}
+          selectedId={selectedPatientId}
+          onSelect={selectPatient}
+        />
+      </div>
+
+      {/* Three-panel layout below */}
+      <PanelGroup className="flex-1">
         {/* Left Panel: Patient Context */}
         <Panel defaultSize={25} minSize={18}>
           <div className="flex h-full flex-col overflow-y-auto border-r border-gray-200 bg-gray-50/50 p-4">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
               Patient Context
             </h2>
-            <PatientSwitcher
-              patients={patients}
-              selectedId={selectedPatientId}
-              onSelect={selectPatient}
-            />
             {selectedPatient && (
-              <div className="mt-4">
-                <PatientInfoPanel patient={selectedPatient} />
-              </div>
+              <PatientInfoPanel patient={selectedPatient} systems={systems} />
             )}
           </div>
         </Panel>
@@ -110,18 +103,12 @@ export default function AnnotationStudio() {
             <TimeSeriesChart
               channel={biometricStreams.temperature}
               events={clinicalEvents}
-              onEventClick={(id) => {
-                setSelectedEvent(id);
-                setActiveTab('events');
-              }}
+              onEventClick={setSelectedEvent}
             />
             <TimeSeriesChart
               channel={biometricStreams.heartRate}
               events={clinicalEvents}
-              onEventClick={(id) => {
-                setSelectedEvent(id);
-                setActiveTab('events');
-              }}
+              onEventClick={setSelectedEvent}
             />
             <div>
               <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
@@ -161,38 +148,6 @@ export default function AnnotationStudio() {
 
             {/* Tab content */}
             <div className="flex-1 overflow-y-auto p-4">
-              {/* Timeline tab */}
-              {activeTab === 'timeline' && (
-                <ClinicalEventsTimeline
-                  events={clinicalEvents}
-                  systems={systems}
-                  selectedEventId={selectedEventId}
-                  onEventSelect={setSelectedEvent}
-                />
-              )}
-
-              {/* Events tab */}
-              {activeTab === 'events' && (
-                <div className="space-y-3">
-                  {[...clinicalEvents]
-                    .sort((a, b) => a.day - b.day)
-                    .map((event) => (
-                      <div
-                        key={event.id}
-                        className={`cursor-pointer rounded-lg transition-all ${
-                          selectedEventId === event.id ? 'ring-2 ring-blue-400' : ''
-                        }`}
-                        onClick={() => setSelectedEvent(event.id)}
-                      >
-                        <ClinicalEventCard
-                          event={event}
-                          accentColor={systemColorMap.get(event.sourceSystemId) ?? '#6B7280'}
-                        />
-                      </div>
-                    ))}
-                </div>
-              )}
-
               {/* Findings tab */}
               {activeTab === 'findings' && (
                 <div className="space-y-3">
@@ -212,16 +167,30 @@ export default function AnnotationStudio() {
               {/* Reasoning tab */}
               {activeTab === 'reasoning' && (
                 <>
-                  {selectedFinding ? (
-                    <ReasoningNarrative
-                      narrative={selectedFinding.reasoningNarrative}
-                      finding={selectedFinding}
-                    />
-                  ) : (
-                    <div className="flex h-32 items-center justify-center text-sm text-gray-400">
-                      Select a finding in the Findings tab to view reasoning
-                    </div>
-                  )}
+                  {(() => {
+                    const patientNarrative = analytics.patientReasoningNarratives?.find(
+                      (n) => n.patientId === selectedPatientId
+                    );
+
+                    if (!patientNarrative) {
+                      return (
+                        <div className="flex h-32 items-center justify-center text-sm text-gray-400">
+                          No reasoning narrative available for this patient
+                        </div>
+                      );
+                    }
+
+                    // Find the primary finding to pass signal contributions and KB sources for highlighting
+                    const primaryFinding = findingsWithStatus.find((f) => f.confidenceLevel === 'high')
+                      || findingsWithStatus[0];
+
+                    return (
+                      <ReasoningNarrative
+                        narrative={patientNarrative.narrative}
+                        finding={primaryFinding}
+                      />
+                    );
+                  })()}
                 </>
               )}
             </div>

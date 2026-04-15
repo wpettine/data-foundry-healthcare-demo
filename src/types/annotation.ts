@@ -31,3 +31,9 @@ export interface DifferentialItem {
   probability: 'high' | 'low';
   reasoning: string;
 }
+
+export interface PatientReasoningNarrative {
+  patientId: string;
+  narrative: string;
+  lastUpdated: string;
+}

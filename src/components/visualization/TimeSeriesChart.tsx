@@ -79,6 +79,43 @@ export function TimeSeriesChart({ channel, events, onEventClick }: TimeSeriesCha
       });
     }
 
+    // Change-point hover trace
+    if (channel.changePoints.length > 0) {
+      const cpX = channel.changePoints.map((cp) => {
+        if (cp.day < actualX.length) return actualX[cp.day];
+        return actualX[actualX.length - 1];
+      });
+
+      const cpY = channel.changePoints.map((cp) => cp.observedValue);
+
+      plotTraces.push({
+        x: cpX,
+        y: cpY,
+        type: 'scatter',
+        mode: 'markers',
+        name: 'Change Points',
+        marker: {
+          symbol: 'diamond',
+          size: 12,
+          color: '#DC2626',
+          line: { color: '#FFF', width: 1.5 },
+        },
+        text: channel.changePoints.map((cp) => {
+          const deviation = cp.observedValue - cp.expectedValue;
+          const sign = deviation > 0 ? '+' : '';
+          return (
+            `<b>Bayesian Change-Point Detection</b><br>` +
+            `Posterior probability: ${(cp.posteriorProbability * 100).toFixed(1)}%<br>` +
+            `Expected ${channel.label}: ${cp.expectedValue.toFixed(1)}${cp.unit}<br>` +
+            `Observed: ${cp.observedValue.toFixed(1)}${cp.unit}<br>` +
+            `Deviation: ${sign}${deviation.toFixed(1)}${cp.unit} beyond patient-adjusted confidence interval`
+          );
+        }),
+        hoverinfo: 'text',
+        showlegend: false,
+      });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plotShapes: any[] = channel.changePoints.map((cp) => ({
       type: 'line',

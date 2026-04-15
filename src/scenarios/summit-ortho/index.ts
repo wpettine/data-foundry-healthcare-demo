@@ -10,6 +10,7 @@ import { TRAINING_DATA } from './training-data';
 import { BIOMETRIC_STREAMS } from './biometric-streams';
 import { CLINICAL_EVENTS } from './clinical-events';
 import { AI_FINDINGS } from './ai-findings';
+import { PATIENT_REASONING_NARRATIVES } from './patient-reasoning';
 import { PIPELINE_ALERTS } from './pipeline-alerts';
 import { SNAPSHOTS } from './snapshots';
 import { KPI_RECONCILIATIONS } from './kpi-reconciliations';
@@ -37,6 +38,7 @@ export const summitOrthoData: ScenarioData = {
     biometricStreams: BIOMETRIC_STREAMS,
     clinicalEvents: CLINICAL_EVENTS,
     aiFindings: AI_FINDINGS,
+    patientReasoningNarratives: PATIENT_REASONING_NARRATIVES,
   },
   kpiDashboard: {
     kpiReconciliations: KPI_RECONCILIATIONS,

@@ -1,6 +1,7 @@
 import type { Patient } from '../../types/patient';
 import type { IdentityResolution } from '../../types/scenario';
 import { SYSTEM_IDS } from './_constants';
+import { mulberry32 } from '../../utils/prng';
 
 const heroIdentity: IdentityResolution = {
   matchedSystems: [SYSTEM_IDS.EPIC, SYSTEM_IDS.ATHENA, SYSTEM_IDS.WEBPT],
@@ -21,17 +22,17 @@ const heroPatient: Patient = {
     { code: 'Z87.891', description: 'Personal history of nicotine dependence', system: 'ICD-10' },
   ],
   medications: [
-    { name: 'Metformin', dose: '1000mg', frequency: 'BID' },
-    { name: 'Enoxaparin', dose: '40mg', frequency: 'Daily' },
-    { name: 'Acetaminophen', dose: '1000mg', frequency: 'Q6H PRN' },
+    { name: 'Metformin', dose: '1000mg', frequency: 'BID', sourceSystemId: SYSTEM_IDS.EPIC },
+    { name: 'Enoxaparin', dose: '40mg', frequency: 'Daily', sourceSystemId: SYSTEM_IDS.EPIC },
+    { name: 'Acetaminophen', dose: '1000mg', frequency: 'Q6H PRN', sourceSystemId: SYSTEM_IDS.EPIC },
   ],
   allergies: ['Sulfa drugs'],
   preOpValues: {
-    BMI: '31.2',
-    LEFS: '28/80',
-    HbA1c: '7.8%',
-    ROM: '95°',
-    'KL Grade': '3',
+    BMI: { value: '31.2', sourceSystemId: SYSTEM_IDS.EPIC },
+    LEFS: { value: '28/80', sourceSystemId: SYSTEM_IDS.WEBPT },
+    HbA1c: { value: '7.8%', sourceSystemId: SYSTEM_IDS.EPIC },
+    ROM: { value: '95°', sourceSystemId: SYSTEM_IDS.ATHENA },
+    'KL Grade': { value: '3', sourceSystemId: SYSTEM_IDS.RADIOLOGY },
   },
   identityResolution: heroIdentity,
   riskLevel: 'moderate',
@@ -219,4 +220,43 @@ const fillerPatients: Patient[] = [
   },
 ];
 
-export const PATIENTS: Patient[] = [heroPatient, ...fillerPatients];
+// Generate additional filler patients to match PA cases
+function generateFillerPatients() {
+  const rand = mulberry32(20260310);
+  const initials = ['A.B.', 'C.D.', 'E.F.', 'G.H.', 'I.J.', 'K.L.', 'M.N.', 'O.P.', 'Q.R.', 'S.T.', 'U.V.', 'W.X.', 'Y.Z.'];
+  const riskLevels: Array<'low' | 'moderate' | 'high'> = ['low', 'moderate', 'high'];
+  const matchMethods = ['DOB + last name', 'MRN crosswalk', 'SSN last-4 + DOB'];
+
+  const patients: Patient[] = [];
+
+  for (let i = 0; i < 33; i++) {
+    const ageBase = 50 + Math.floor(rand() * 30); // 50-80 years old
+    const isMale = rand() > 0.5;
+    const bmi = (22 + rand() * 16).toFixed(1); // 22-38
+
+    patients.push({
+      id: `patient-filler-${i}`,
+      initials: initials[i % initials.length],
+      mrn: String(5000000 + Math.floor(rand() * 999999)),
+      dateOfBirth: `19${70 - (ageBase - 50)}-${String(1 + Math.floor(rand() * 12)).padStart(2, '0')}-${String(1 + Math.floor(rand() * 28)).padStart(2, '0')}`,
+      sex: isMale ? 'M' : 'F',
+      age: ageBase,
+      diagnoses: [],
+      medications: [],
+      allergies: [],
+      preOpValues: {
+        BMI: { value: bmi, sourceSystemId: SYSTEM_IDS.EPIC },
+      },
+      identityResolution: {
+        matchedSystems: [SYSTEM_IDS.EPIC, SYSTEM_IDS.ATHENA],
+        matchMethod: matchMethods[i % matchMethods.length],
+        matchConfidence: 0.85 + rand() * 0.14,
+      },
+      riskLevel: riskLevels[i % riskLevels.length],
+    });
+  }
+
+  return patients;
+}
+
+export const PATIENTS: Patient[] = [heroPatient, ...fillerPatients, ...generateFillerPatients()];

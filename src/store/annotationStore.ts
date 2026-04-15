@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type AnnotationTab = 'timeline' | 'events' | 'findings' | 'reasoning';
+export type AnnotationTab = 'findings' | 'reasoning';
 
 export interface AnnotationStoreState {
   selectedPatientId: string;
@@ -24,7 +24,7 @@ const initialState = {
   rejectedFindingIds: [] as string[],
   selectedFindingId: null,
   selectedEventId: null,
-  activeTab: 'timeline' as AnnotationTab,
+  activeTab: 'reasoning' as AnnotationTab,
 };
 
 export const useAnnotationStore = create<AnnotationStoreState>()((set) => ({
