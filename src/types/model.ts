@@ -2,7 +2,6 @@ export interface ModelProject {
   name: string;
   targetVariable: string;
   population: string;
-  status: 'draft' | 'features-selected' | 'assembling' | 'assembled' | 'training';
   eligibleCases: number;
   contributingSites: number;
   totalSites: number;

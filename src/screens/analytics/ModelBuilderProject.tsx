@@ -1,11 +1,15 @@
 import { useEffect, useCallback, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import { useScenario } from '../../scenarios/ScenarioContext';
 import { MetricCard } from '../../components/data-display/MetricCard';
 import { FeatureRow } from '../../components/data-display/FeatureRow';
+import { LiteraturePanel } from '../../components/data-display/LiteraturePanel';
 import { ProcessingOverlay } from '../../components/feedback/ProcessingOverlay';
+import { StatusBadge } from '../../components/feedback/StatusBadge';
+import { SourceCategoryTabs } from '../../components/interactive/SourceCategoryTabs';
 import ScreenContainer from '../../components/layout/ScreenContainer';
-import { useModelStore } from '../../store/modelStore';
+import { useModelStore, type FeatureCategory } from '../../store/modelStore';
 
 const ASSEMBLY_PHASES = [
   'Connecting to sites',
@@ -26,11 +30,39 @@ const PHASE_MAP: Record<string, number> = {
   complete: 5,
 };
 
+const CATEGORY_LABELS: Record<FeatureCategory, string> = {
+  all: 'All',
+  'pre-op': 'Pre-Op',
+  procedure: 'Procedure',
+  'post-op-biometric': 'Post-Op Biometrics',
+};
+
+const STATUS_CONFIG = {
+  idle: { text: 'Ready to Assemble', variant: 'default' as const },
+  connecting: { text: 'Assembling', variant: 'warning' as const },
+  resolving: { text: 'Assembling', variant: 'warning' as const },
+  normalizing: { text: 'Assembling', variant: 'warning' as const },
+  validating: { text: 'Assembling', variant: 'warning' as const },
+  assembling: { text: 'Assembling', variant: 'warning' as const },
+  complete: { text: 'Dataset Assembled', variant: 'success' as const },
+};
+
 export default function ModelBuilderProject() {
   const { analytics } = useScenario();
   const navigate = useNavigate();
-  const { excludedFeatureIds, assemblyPhase, toggleFeature, startAssembly, advancePhase } =
-    useModelStore();
+  const {
+    excludedFeatureIds,
+    assemblyPhase,
+    selectedCategory,
+    selectedFeatureId,
+    expandedFeatureIds,
+    toggleFeature,
+    startAssembly,
+    advancePhase,
+    setSelectedCategory,
+    selectFeature,
+    toggleFeatureExpansion,
+  } = useModelStore();
 
   // Auto-advance phases every 1.5s when assembly is running
   useEffect(() => {
@@ -52,11 +84,17 @@ export default function ModelBuilderProject() {
 
   const activeFeatures = useMemo(() => {
     if (!analytics) return [];
-    return analytics.modelProject.features.map((f) => ({
+    let filtered = analytics.modelProject.features;
+
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter((f) => f.category === selectedCategory);
+    }
+
+    return filtered.map((f) => ({
       ...f,
       included: !excludedFeatureIds.includes(f.id),
     }));
-  }, [analytics, excludedFeatureIds]);
+  }, [analytics, excludedFeatureIds, selectedCategory]);
 
   if (!analytics) {
     return <Navigate to="/dashboard" replace />;
@@ -65,10 +103,14 @@ export default function ModelBuilderProject() {
   const { modelProject } = analytics;
   const currentPhaseIdx = PHASE_MAP[assemblyPhase] ?? -1;
   const isAssembling = assemblyPhase !== 'idle' && assemblyPhase !== 'complete';
+  const { text: statusText, variant: statusVariant } = STATUS_CONFIG[assemblyPhase];
 
   return (
     <ScreenContainer>
-      <h1 className="text-lg font-semibold text-gray-900">{modelProject.name}</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="text-lg font-semibold text-gray-900">{modelProject.name}</h1>
+        <StatusBadge status={statusText} variant={statusVariant} />
+      </div>
       <p className="mt-1 text-sm text-gray-500">
         {modelProject.targetVariable} &middot; {modelProject.population}
       </p>
@@ -90,31 +132,72 @@ export default function ModelBuilderProject() {
         />
       </div>
 
-      {/* Feature list */}
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">
-            Features ({activeFeatures.filter((f) => f.included).length}/{activeFeatures.length})
-          </h2>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white">
-          {/* Header row */}
-          <div className="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-            <span className="w-9">On</span>
-            <span className="flex-1">Feature</span>
-            <span>Sources</span>
-            <span className="w-16 text-center">Coverage</span>
-            <span className="w-20 text-center">Confidence</span>
-            <span className="w-12 text-center">Lit.</span>
-          </div>
-          {activeFeatures.map((feature) => (
-            <FeatureRow
-              key={feature.id}
-              feature={feature}
-              onToggle={() => handleToggle(feature.id)}
-            />
-          ))}
-        </div>
+      {/* Category tabs */}
+      <div className="mt-8">
+        <SourceCategoryTabs
+          categories={Object.values(CATEGORY_LABELS)}
+          active={CATEGORY_LABELS[selectedCategory]}
+          onChange={(label) => {
+            const category = (Object.keys(CATEGORY_LABELS) as FeatureCategory[]).find(
+              (key) => CATEGORY_LABELS[key] === label,
+            );
+            if (category) setSelectedCategory(category);
+          }}
+        />
+      </div>
+
+      {/* Feature list with resizable literature panel */}
+      <section className="mt-6 h-[600px]">
+        <PanelGroup>
+          {/* Feature table panel */}
+          <Panel defaultSize={selectedFeatureId ? 70 : 100} minSize={50}>
+            <div className="h-full overflow-y-auto pr-2">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-700">
+                  Features ({activeFeatures.filter((f) => f.included).length}/
+                  {activeFeatures.length})
+                </h2>
+              </div>
+              <div className="rounded-lg border border-gray-200 bg-white">
+                {/* Header row */}
+                <div className="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                  <span className="w-9">On</span>
+                  <span className="flex-1">Feature</span>
+                  <span>Sources</span>
+                  <span className="w-16 text-center">Coverage</span>
+                  <span className="w-20 text-center">Confidence</span>
+                  <span className="w-12 text-center">Lit.</span>
+                </div>
+                {activeFeatures.map((feature) => (
+                  <FeatureRow
+                    key={feature.id}
+                    feature={feature}
+                    onToggle={() => handleToggle(feature.id)}
+                    onSelect={() =>
+                      selectFeature(feature.id === selectedFeatureId ? null : feature.id)
+                    }
+                    isSelected={selectedFeatureId === feature.id}
+                    isExpanded={expandedFeatureIds.includes(feature.id)}
+                    onToggleExpansion={() => toggleFeatureExpansion(feature.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          </Panel>
+
+          {/* Resize handle (only show when panel open) */}
+          {selectedFeatureId && (
+            <>
+              <PanelResizeHandle className="w-1.5 bg-gray-200 hover:bg-blue-400 transition-colors" />
+              <Panel defaultSize={30} minSize={20}>
+                <LiteraturePanel
+                  feature={activeFeatures.find((f) => f.id === selectedFeatureId) ?? null}
+                  onClose={() => selectFeature(null)}
+                />
+              </Panel>
+            </>
+          )}
+        </PanelGroup>
       </section>
 
       {/* Action buttons */}

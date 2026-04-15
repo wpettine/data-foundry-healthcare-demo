@@ -12,9 +12,34 @@ const outcomeBadge = {
   'no-complication': 'bg-emerald-50 text-emerald-700 border-emerald-200',
 } as const;
 
+// Helper function to calculate column completeness
+function calculateColumnCompleteness(data: TrainingRecord[], featureKey: string): number {
+  if (data.length === 0) return 0;
+
+  const nonNullCount = data.filter((record) => record.features[featureKey] != null).length;
+
+  return Math.round((nonNullCount / data.length) * 100);
+}
+
 export default function ModelBuilderDataset() {
   const { analytics } = useScenario();
   const { assemblyPhase } = useModelStore();
+
+  // Calculate quality metrics for each feature column
+  const columnQualityMap = useMemo(() => {
+    if (!analytics) return new Map<string, number>();
+
+    const sampleFeatures = analytics.trainingData[0]?.features ?? {};
+    const featureKeys = Object.keys(sampleFeatures);
+
+    const qualityMap = new Map<string, number>();
+    featureKeys.forEach((key) => {
+      const completeness = calculateColumnCompleteness(analytics.trainingData, key);
+      qualityMap.set(key, completeness);
+    });
+
+    return qualityMap;
+  }, [analytics]);
 
   const columns = useMemo<ColumnDef<TrainingRecord, unknown>[]>(() => {
     if (!analytics) return [];
@@ -66,17 +91,28 @@ export default function ModelBuilderDataset() {
       },
     ];
 
-    // Add dynamic feature columns
-    const featureCols: ColumnDef<TrainingRecord, unknown>[] = featureKeys.map((key) => ({
-      id: `feature_${key}`,
-      header: key,
-      accessorFn: (row: TrainingRecord) => row.features[key] ?? '--',
-      cell: (info: { getValue: () => unknown }) => (
-        <span className="font-[JetBrains_Mono] text-xs text-gray-600">
-          {String(info.getValue())}
-        </span>
-      ),
-    }));
+    // Add dynamic feature columns with quality indicators
+    const featureCols: ColumnDef<TrainingRecord, unknown>[] = featureKeys.map((key) => {
+      const completeness = columnQualityMap.get(key) ?? 0;
+
+      return {
+        id: `feature_${key}`,
+        header: () => (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium text-gray-700">{key}</span>
+            <span className="font-[JetBrains_Mono] text-[10px] font-normal text-gray-400">
+              {completeness}%
+            </span>
+          </div>
+        ),
+        accessorFn: (row: TrainingRecord) => row.features[key] ?? '--',
+        cell: (info: { getValue: () => unknown }) => (
+          <span className="font-[JetBrains_Mono] text-xs text-gray-600">
+            {String(info.getValue())}
+          </span>
+        ),
+      };
+    });
 
     return [...baseCols, ...featureCols];
   }, [analytics]);

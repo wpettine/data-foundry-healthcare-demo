@@ -290,7 +290,6 @@ export const MODEL_PROJECT: ModelProject = {
   name: 'TKA Complication Risk Model',
   targetVariable: 'post_op_complication_30d',
   population: 'Primary TKA patients, age ≥50',
-  status: 'draft',
   eligibleCases: MODEL_COUNTS.eligibleCases,
   contributingSites: MODEL_COUNTS.sites,
   totalSites: MODEL_COUNTS.totalSites,
