@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-**Data Foundry Healthcare** — design docs and reference materials for a non-functional, visually realistic walkthrough UI targeting M&A professionals in healthcare technology. The app demonstrates schema-first semantic integration that turns months of M&A data chaos into auditable financial intelligence.
+**Data Foundry Healthcare** — a non-functional, visually realistic walkthrough UI targeting M&A professionals in healthcare technology. The app demonstrates schema-first semantic integration that turns months of M&A data chaos into auditable financial intelligence.
 
-This repository is in a **pre-code planning phase**. It contains design documents and reference materials; no source code, package.json, or build system exists yet. When implementation begins, the target stack is: **Vite 7 + React 19 + TypeScript 5.9 + Tailwind CSS 4**, with Zustand (state), ReactFlow (graph diagrams), Recharts (charts), TanStack Table (data tables), dagre (graph layout), lucide-react (icons), react-resizable-panels, and react-plotly.js (Annotation Studio only).
+**Stack:** Vite + React 19 + TypeScript + Tailwind CSS 4, with Zustand (state), ReactFlow (graph diagrams), Recharts (charts), TanStack Table (data tables), dagre (graph layout), lucide-react (icons), react-resizable-panels, and react-plotly.js (Annotation Studio only).
 
 ## Repository Structure
 
@@ -37,24 +37,30 @@ This repository is in a **pre-code planning phase**. It contains design document
 5. `prior_auth_workbench_design.md` — Deep-dive patterns for PA screens specifically.
 6. Reference docs as needed for domain data and clinical context.
 
-## Commands (When Implementation Begins)
+## Commands
 
 ```bash
-# Project initialization (from code_architecture.md)
-npm create vite@latest data-foundry-healthcare -- --template react-ts
-cd data-foundry-healthcare
-npm install react-router-dom zustand recharts @tanstack/react-table reactflow dagre lucide-react date-fns react-plotly.js plotly.js-dist-min react-resizable-panels
-npm install -D @tailwindcss/vite @types/dagre
-
-# Development
-npm run dev
-
-# Build (MUST run after changing constants, annotation data, or fixture files — build-time validation catches data inconsistencies)
-npm run build
+npm run dev          # Start dev server (Vite)
+npm run build        # TypeScript check + Vite build (MUST run after changing constants, annotation data, or fixture files — build-time validation catches data inconsistencies)
+npm run lint         # ESLint
+npm run preview      # Preview production build locally
 
 # Add a new scenario
-npx tsx scripts/new-scenario.ts <id> "<Company Name>"
+npx tsx src/scripts/new-scenario.ts <id> "<Company Name>"
 ```
+
+## Code Structure
+
+- `src/screens/` — Page-level components, organized by sidebar section: `workspace/`, `integration/`, `clinical/`, `analytics/`, `system/`
+- `src/components/` — Reusable components: `layout/`, `feedback/`, `data-display/`, `interactive/`, `visualization/`, `clinical/`
+- `src/scenarios/` — Scenario data modules. Each scenario is a directory (e.g., `summit-ortho/`) with `_constants.ts`, domain fixture files, and an `index.ts` assembly. `manifest.ts` is the registry.
+- `src/store/` — Zustand stores for demo progression state (`paStore`, `schemaStore`, `modelStore`, `annotationStore`). `resetDemo.ts` exposes `resetAllStores()`.
+- `src/types/` — Shared TypeScript interfaces (scenario, patient, PA, payer, clinical, pipeline, etc.)
+- `src/hooks/` — Custom hooks (`useUrlParams`, `useKeyboardShortcuts`, `useAnimatedCounter`, `useLinkedHighlight`, `usePanelResize`)
+- `src/utils/` — Pure utilities (colors, formatters, PRNG, graph layout, validation)
+- `src/styles/globals.css` — Tailwind entry point
+
+**Routes** (defined in `App.tsx`): `/` (landing) then inside `AppShell`: `/dashboard`, `/sources`, `/schema-explorer`, `/concept-map`, `/payer-criteria`, `/patient-records`, `/pa-workbench`, `/pa-workbench/:caseId`, `/model-builder`, `/model-builder/dataset`, `/annotation-studio`, `/pipeline-health`
 
 ## Data Architecture (Core Invariant)
 

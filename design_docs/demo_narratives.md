@@ -65,9 +65,9 @@ Three jumpable states for presenter flexibility:
 
 | Snapshot | URL | State |
 |---|---|---|
-| Post-integration | `?scenario=day-22` | Dashboard populated, 20 sources integrated, denial data visible |
-| PA active | `?scenario=pa-active` | PA Workbench with the TKA case mid-assembly, evidence partially reviewed |
-| Model ready | `?scenario=model-ready` | Model Builder with dataset assembled, Annotation Studio populated |
+| Post-integration | `?snapshot=day-22` | Dashboard populated, 20 sources integrated, denial data visible |
+| PA active | `?snapshot=pa-active` | PA Workbench with the TKA case mid-assembly, evidence partially reviewed |
+| Model ready | `?snapshot=model-ready` | Model Builder with dataset assembled, Annotation Studio populated |
 
 ---
 
@@ -642,7 +642,7 @@ Events are color-coded by source system (provenance): Ortho EHR events in one ac
 
 Four-tab view: **Timeline | Events | Findings | Reasoning**
 
-The Reasoning tab is selected by default in the `?scenario=model-ready` store snapshot — the presenter lands here first.
+The Reasoning tab is selected by default in the `?snapshot=model-ready` store snapshot — the presenter lands here first.
 
 *Timeline tab:* Interleaved chronological feed of clinical events and AI findings, ordered by date. Each entry is a compact card. This is the "everything in order" view.
 

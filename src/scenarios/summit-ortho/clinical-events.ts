@@ -1,0 +1,61 @@
+import type { ClinicalEvent } from '../../types/clinical';
+import { SYSTEM_IDS } from './_constants';
+
+export const CLINICAL_EVENTS: ClinicalEvent[] = [
+  {
+    id: 'evt-surgery',
+    day: 0,
+    type: 'surgery',
+    title: 'Total Knee Arthroplasty',
+    description: 'Right TKA performed under spinal anesthesia, cemented CR implant',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    icon: 'Scissors',
+  },
+  {
+    id: 'evt-ambulation',
+    day: 1,
+    type: 'ambulation',
+    title: 'First Ambulation',
+    description: 'Patient ambulated 50 ft with rolling walker, weight-bearing as tolerated',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    icon: 'Footprints',
+  },
+  {
+    id: 'evt-pt-eval',
+    day: 3,
+    type: 'pt-eval',
+    title: 'Physical Therapy Evaluation',
+    description: 'ROM 5-65 degrees, quad activation fair, gait training initiated',
+    sourceSystemId: SYSTEM_IDS.WEBPT,
+    icon: 'ClipboardCheck',
+  },
+  {
+    id: 'evt-discharge',
+    day: 4,
+    type: 'discharge',
+    title: 'Hospital Discharge',
+    description: 'Discharged to home with home health PT, pain well-controlled on oral meds',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    icon: 'DoorOpen',
+  },
+  {
+    id: 'evt-wound-check',
+    day: 10,
+    type: 'wound-check',
+    title: 'Wound Check',
+    description: 'Mild erythema noted at incision site',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    icon: 'Stethoscope',
+    knowledgeContext: 'Early clinical sign correlating with biometric deviation',
+  },
+  {
+    id: 'evt-antibiotic',
+    day: 13,
+    type: 'antibiotic',
+    title: 'Antibiotic Started',
+    description: 'Cephalexin 500mg QID initiated',
+    sourceSystemId: SYSTEM_IDS.PHARMACY,
+    icon: 'Pill',
+    knowledgeContext: 'Clinical response to suspected infection',
+  },
+];

@@ -2,7 +2,7 @@
 
 This document specifies the file structure, key interfaces, data pipeline, stores, and component inventory required to implement the demo described in `demo_narratives.md`. It follows the patterns established in `demo_data_architecture.md` and the visual/interaction rules from `demo_design_guide.md`.
 
-**Before writing code, read this document and the three documents it references.** If something in `demo_narratives.md` contradicts this architecture, this document wins — the narrative describes *what* the audience sees, this document describes *how* the code delivers it.
+**Before writing code, read this document and the three documents it references.** Where this document conflicts with `demo_narratives.md`, `demo_data_architecture.md`, or `demo_design_guide.md`, this document wins for the Healthcare demo. The narrative describes *what* the audience sees; this document describes *how* the code delivers it.
 
 ---
 
@@ -44,6 +44,8 @@ npm install -D @tailwindcss/vite @types/dagre
 | Resizable panels | react-resizable-panels | latest |
 
 **No other UI libraries.** No MUI, Chakra, Ant, Radix, shadcn. All components hand-built with Tailwind.
+
+**Accessibility scope:** Beyond the existing rule of never using color alone to convey meaning, full keyboard navigation and ARIA roles are out of scope for initial implementation. Address in a polish pass after the core demo is functional. Components most likely to need attention: ReactFlow graphs (`TopologyGraph`, `ConceptDAG`), resizable panels, and the `SwimLaneTimeline`.
 
 ---
 
@@ -159,11 +161,11 @@ src/
 │   ├── useKeyboardShortcuts.ts       # Global keyboard shortcut registration, context-aware
 │   ├── useLinkedHighlight.ts         # Bidirectional highlight state: selected requirement ↔ evidence
 │   ├── usePanelResize.ts             # react-resizable-panels localStorage persistence
-│   └── useUrlParams.ts              # ?demo= and ?scenario= URL parameter reading
+│   └── useUrlParams.ts              # ?demo= and ?snapshot= URL parameter reading
 │
 ├── types/
 │   ├── system.ts                     # SourceSystem, SystemField, SchemaAnnotation
-│   ├── patient.ts                    # Patient, PatientRecord, IdentityMatch
+│   ├── patient.ts                    # Patient, PatientRecord, IdentityResolution
 │   ├── pa.ts                         # PACase, PARequirementCategory, PARequirement, PAEvidence
 │   ├── payer.ts                      # PayerCriteria, PayerCriterionCell, PayerDivergence
 │   ├── model.ts                      # ModelProject, ModelFeature, TrainingRecord, LiteratureCitation
@@ -295,6 +297,57 @@ export interface AnalyticsModuleData {
   clinicalEvents: ClinicalEvent[];
   aiFindings: AIFinding[];
 }
+
+export interface CompanyInfo {
+  name: string;
+  industry: string;
+  locationCount: number;
+}
+
+export interface DealTimerConfig {
+  currentDay: number;
+  totalDays: number;
+  label: string;            // "Integration Sprint"
+}
+
+export interface TopologyConfig {
+  nodes: TopologyNode[];
+  edges: TopologyEdge[];
+}
+
+export interface TopologyNode {
+  id: string;               // Matches SourceSystem.id
+  label: string;
+  platform: string;
+  accentColor: string;
+  position?: { x: number; y: number }; // Optional — dagre computes layout if omitted
+}
+
+export interface TopologyEdge {
+  id: string;
+  source: string;           // Node ID
+  target: string;           // Node ID
+  label?: string;           // Edge annotation (e.g., "HL7v2", "REST API")
+}
+
+export interface PayerCriteriaSet {
+  payers: PayerCriteria[];
+  procedures: string[];     // Procedure types with criteria rows (e.g., "TKA", "THA")
+}
+
+export interface ScenarioSnapshot {
+  paStore?: Partial<Omit<PAStoreState, 'selectCase' | 'acceptRequirement' | 'setHighlightedRequirement' | 'setHighlightedEvidence' | 'setEvidenceView' | 'bulkAcceptHigh' | 'reset'>>;
+  schemaStore?: Partial<Omit<SchemaStoreState, 'acceptField' | 'bulkAcceptHigh' | 'reset'>>;
+  modelStore?: Partial<Omit<ModelStoreState, 'toggleFeature' | 'startAssembly' | 'advancePhase' | 'reset'>>;
+  annotationStore?: Partial<Omit<AnnotationStoreState, 'selectPatient' | 'approveFinding' | 'rejectFinding' | 'setSelectedFinding' | 'setSelectedEvent' | 'setActiveTab' | 'reset'>>;
+}
+
+export interface IdentityResolution {
+  matchedSystems: string[];       // System IDs where this patient was matched
+  matchMethod: string;            // "DOB + last name", "MRN crosswalk", etc.
+  matchConfidence: number;        // 0–100
+  conflictingFields?: Array<{ field: string; values: Record<string, string> }>;
+}
 ```
 
 ### `system.ts` — Source Systems and Schema
@@ -325,6 +378,25 @@ export interface SchemaAnnotation {
   confidenceLevel: 'high' | 'medium' | 'low';
   status: 'auto-accepted' | 'pending-review' | 'manual';
   alternatives?: Array<{ conceptId: string; conceptLabel: string; confidence: number }>;
+}
+```
+
+### `patient.ts` — Patients and Identity Resolution
+
+```ts
+export interface Patient {
+  id: string;
+  initials: string;          // "M.K."
+  mrn: string;               // "4821937"
+  dateOfBirth: string;       // ISO date
+  sex: 'M' | 'F';
+  age: number;
+  diagnoses: Array<{ code: string; description: string; system: 'ICD-10' | 'SNOMED' }>;
+  medications: Array<{ name: string; dose: string; frequency: string }>;
+  allergies: string[];
+  preOpValues?: Record<string, string>;  // { "BMI": "31.2", "LEFS": "28/80", "ROM": "95°" }
+  identityResolution: IdentityResolution;
+  riskLevel?: 'low' | 'moderate' | 'high';
 }
 ```
 
@@ -519,8 +591,8 @@ Each store manages one domain of demo interaction state. Every store exposes `re
 // In ScenarioContext.tsx
 useEffect(() => {
   resetAllStores();
-  // Apply snapshot AFTER reset, if a ?scenario= param is present
-  const snapshotName = searchParams.get('scenario');
+  // Apply snapshot AFTER reset, if a ?snapshot= param is present
+  const snapshotName = searchParams.get('snapshot');
   if (snapshotName && activeScenario.storeSnapshots[snapshotName]) {
     applySnapshot(activeScenario.storeSnapshots[snapshotName]);
   }
@@ -588,19 +660,21 @@ interface ModelStoreState {
 ### `annotationStore.ts`
 
 ```ts
+type AnnotationTab = 'timeline' | 'events' | 'findings' | 'reasoning';
+
 interface AnnotationStoreState {
   selectedPatientId: string;
   approvedFindingIds: string[];
   rejectedFindingIds: string[];
   selectedFindingId: string | null;
   selectedEventId: string | null;
-  activeTab: 'timeline' | 'events' | 'findings' | 'reasoning';
+  activeTab: AnnotationTab;
   selectPatient: (id: string) => void;
   approveFinding: (id: string) => void;
   rejectFinding: (id: string) => void;
   setSelectedFinding: (id: string | null) => void;
   setSelectedEvent: (id: string | null) => void;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: AnnotationTab) => void;
   reset: () => void;
 }
 ```
@@ -651,6 +725,8 @@ const { cases, patients } = scenario.paWorkbench;
 ```
 
 The `Sidebar` reads the active scenario to show/hide navigation items for null modules — if `scenario.paWorkbench` is null, the PA Workbench sidebar item is not rendered.
+
+**Layout component exception:** Components in `components/layout/` (`AppShell`, `TopBar`, `Sidebar`) may call `useScenario()` for navigation chrome and deal timer data. All other components (`data-display/`, `feedback/`, `interactive/`, `visualization/`, `clinical/`) receive data via props and must not call `useScenario()` directly.
 
 ---
 
@@ -817,20 +893,18 @@ export function validateSummitOrtho() {
 }
 ```
 
-The scenario's `index.ts` calls the validation function as a side-effect:
+The scenario's `index.ts` calls the validation function as a side-effect import — unconditionally, so validation runs both in dev mode and during production builds:
 
 ```ts
 // src/scenarios/summit-ortho/index.ts (bottom of file)
-if (import.meta.env.DEV) {
-  validateSummitOrtho();
-}
+validateSummitOrtho();
 ```
 
 ---
 
 ## Store Snapshots
 
-Three snapshots defined in `src/scenarios/summit-ortho/snapshots.ts`, loaded via `?scenario=` URL param.
+Three snapshots defined in `src/scenarios/summit-ortho/snapshots.ts`, loaded via `?snapshot=` URL param.
 
 | Snapshot | What it sets |
 |---|---|
@@ -958,28 +1032,47 @@ Author `_constants.ts` and all type definitions in `src/types/`. Create the `Sce
 
 Author system fixtures (hero + filler). Build `Dashboard`, `Sources` (TopologyGraph), and `SchemaExplorer`. Implement `MetricCard`, `DataTable`, `ConfidenceBadge`, `StatusBadge`, `SourceBadge`.
 
-**Done when:** Dashboard shows 20 sources with real data. Clicking a node in Sources navigates to Schema Explorer filtered to that system. "Accept all High-confidence" works in Schema Explorer.
+**Done when:** `npm run build` passes. **Verify by:**
+- Visit `/dashboard?demo=summit-ortho` — metric cards show 20 / 4,847 / 94.2% / 12
+- Visit `/sources` — TopologyGraph renders 20 nodes; click a node to confirm it navigates to Schema Explorer filtered to that system
+- Visit `/schema-explorer` — table renders; click "Accept all High-confidence" and confirm bulk action completes
 
 ### Phase 4: Situation 2 — PA Workbench
 
 Author PA fixtures (hero case M.K. + filler cases). Build `PAWorklist` and `PADetail`. Implement `EvidenceCard`, `RequirementCategory`, `RequirementRow`, `MiniProgressBar`, `StackedProgressBar`, `SLACountdown`, `BulkActionBar`, `AccordionChecklist`, `SwimLaneTimeline`.
 
-**Done when:** Worklist renders with sortable columns, dual countdown timers, mini progress bars. Clicking M.K. opens the three-panel detail view. Bidirectional linked highlighting works between evidence and requirements. Timeline view renders swim lanes with requirement highlighting. Progress bar updates when a Review item is accepted. Keyboard shortcuts work.
+**Done when:** `npm run build` passes. **Verify by:**
+- Visit `/pa-workbench?demo=summit-ortho` — worklist renders with sortable columns, dual countdown timers, mini progress bars
+- Click M.K. row — three-panel detail view opens; click a requirement to confirm bidirectional highlighting with evidence panel
+- Toggle to Timeline view — swim lanes render with requirement bands
+- Accept a Review requirement — progress bar numerator increments
+- Press `?` — keyboard shortcut legend opens
 
 ### Phase 5: Situation 3 — Payer Criteria, Concept Map
 
 Author payer criteria fixtures with named payers. Build `PayerCriteria` and `ConceptMap`. Implement `ConceptDAG`.
 
-**Done when:** Criteria grid shows BCBS MA, Aetna MA, United, Humana with divergence column. Concept Map renders a navigable DAG for "right knee osteoarthritis."
+**Done when:** `npm run build` passes. **Verify by:**
+- Visit `/payer-criteria?demo=summit-ortho` — grid shows BCBS MA, Aetna MA, United, Humana columns with divergence indicators
+- Visit `/concept-map` — DAG renders for "right knee osteoarthritis"; nodes are draggable and edges connect coding systems to payer criteria
 
 ### Phase 6: Situation 4 — Model Builder, Annotation Studio
 
 Author model features, training data, biometric streams, clinical events, AI findings. Build `ModelBuilderProject`, `ModelBuilderDataset`, `AnnotationStudio`. Implement `PatientSwitcher`, `PatientInfoPanel`, `TimeSeriesChart`, `ClinicalEventsTimeline`, `FindingCard`, `ReasoningNarrative`, `FeatureRow`, `ProcessingOverlay`.
 
-**Done when:** Model Builder shows feature table with coverage and literature. Processing overlay runs on "Assemble Dataset." Dataset view renders training data. Annotation Studio shows patient switcher, dual-trace time-series with expected curves and change-point annotations, clinical events timeline, four-tab context panel with reasoning narrative. Finding card expands to show signal contributions, knowledge base pills, differential, and clinical correlates.
+**Done when:** `npm run build` passes. **Verify by:**
+- Visit `/model-builder?demo=summit-ortho` — feature table shows 11 features with coverage and literature citations
+- Click "Assemble Dataset" — processing overlay runs through all phases; on completion, navigate to `/model-builder/dataset` and confirm training data table renders
+- Visit `/annotation-studio?demo=summit-ortho&snapshot=model-ready` — patient switcher shows M.K. selected; time-series renders dual traces (actual + expected) with confidence band and change-point annotations
+- Click a finding card — expands to show signal contributions stacked bar, knowledge base pills, differential table, and clinical correlates
+- Switch to Reasoning tab — structured narrative renders
 
 ### Phase 7: System + Snapshots + Polish
 
-Build `PipelineHealth`. Author snapshot definitions. Wire up `Ctrl+Shift+R` reset. Implement URL parameter loading for `?scenario=`. Test all three snapshots.
+Build `PipelineHealth`. Author snapshot definitions. Wire up `Ctrl+Shift+R` reset. Implement URL parameter loading for `?snapshot=`. Test all three snapshots.
 
-**Done when:** All three snapshots load correctly via URL. Pipeline Health shows hero alerts. Global reset returns to landing page. `npm run build` passes with zero errors and all validation assertions pass.
+**Done when:** `npm run build` passes with zero errors and all validation assertions pass. **Verify by:**
+- Visit `/pipeline-health?demo=summit-ortho` — hero alerts (schema drift, criteria update) render in the feed
+- Load each snapshot URL: `?demo=summit-ortho&snapshot=day-22`, `&snapshot=pa-active`, `&snapshot=model-ready` — confirm each sets the expected store state
+- Press `Ctrl+Shift+R` — all stores reset, app returns to landing page
+- Run `npm run build` — exits 0 with no warnings

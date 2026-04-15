@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Brand */
+  --color-primary: #1A56DB;
+  --color-primary-light: #3B82F6;
+
+  /* Status — the RAG (Red/Amber/Green) system */
+  --color-verified: #059669;
+  --color-warning: #D97706;
+  --color-error: #DC2626;
+  --color-neutral: #6B7280;
+
+  /* Confidence badges */
+  --color-confidence-high: #059669;
+  --color-confidence-medium: #D97706;
+  --color-confidence-low: #DC2626;
+
+  /* AI annotation overlays */
+  --color-overlay-anomaly: #E91E63;
+  --color-overlay-noise: #9E9E9E;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  margin: 0;
+  background-color: #f9fafb;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

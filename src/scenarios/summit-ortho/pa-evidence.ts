@@ -1,0 +1,299 @@
+import type { PAEvidence } from '../../types/pa';
+import { SYSTEM_IDS } from './_constants';
+
+export const HERO_EVIDENCE: PAEvidence[] = [
+  // --- PT Session records from WebPT ---
+  {
+    id: 'ev-pt-initial',
+    sourceSystemId: SYSTEM_IDS.WEBPT,
+    sourceSystemName: 'WebPT',
+    recordType: 'PT Session',
+    date: '2026-02-03',
+    description: 'Initial PT evaluation — right knee OA. LEFS 28/80. Pain 7/10 with stair descent. Limited ROM flexion 95°. Quad weakness 4/5. Plan: 2x/week for 8 weeks, focus on quad strengthening and ROM.',
+    extractedValues: {
+      LEFS: '28/80',
+      'Pain Level': '7/10',
+      'ROM Flexion': '95°',
+      'Quad Strength': '4/5',
+      'Frequency': '2x/week',
+    },
+    confidence: 96,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-pt-completed', 'req-functional-deficit'],
+  },
+  {
+    id: 'ev-pt-progress',
+    sourceSystemId: SYSTEM_IDS.WEBPT,
+    sourceSystemName: 'WebPT',
+    recordType: 'PT Session',
+    date: '2026-02-28',
+    description: '4-week progress note — 8 sessions completed. LEFS improved 28→31/80 (minimal change). ROM unchanged at 95°. Patient reports persistent pain limiting ADLs. Recommend continued therapy.',
+    extractedValues: {
+      LEFS: '31/80',
+      'Sessions Completed': '8',
+      'ROM Flexion': '95°',
+      'Pain Level': '6/10',
+    },
+    confidence: 94,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-pt-completed', 'req-conservative-failed'],
+  },
+  {
+    id: 'ev-pt-discharge',
+    sourceSystemId: SYSTEM_IDS.WEBPT,
+    sourceSystemName: 'WebPT',
+    recordType: 'PT Session',
+    date: '2026-03-14',
+    description: '8-week discharge summary — 16 sessions completed. LEFS 32/80 (plateau). ROM 98° (minimal gain). Functional goals not met. Patient unable to return to baseline walking tolerance. Recommend surgical consultation.',
+    extractedValues: {
+      LEFS: '32/80',
+      'Sessions Completed': '16',
+      'ROM Flexion': '98°',
+      'Pain Level': '6/10',
+      Outcome: 'Goals not met — plateau',
+    },
+    confidence: 97,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-pt-completed', 'req-conservative-failed'],
+  },
+
+  // --- Orthopedic consult from Epic ---
+  {
+    id: 'ev-ortho-consult',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    sourceSystemName: 'Epic',
+    recordType: 'Office Visit',
+    date: '2026-03-05',
+    description: 'Orthopedic consult — Dr. Patel. Right knee: ROM 95° (limited), grade 2+ crepitus with passive motion, 5° varus alignment. Tenderness along medial joint line. Effusion present. Failed conservative management. Recommend TKA.',
+    extractedValues: {
+      ROM: '95°',
+      Crepitus: 'Grade 2+',
+      Alignment: '5° varus',
+      'Joint Line Tenderness': 'Medial',
+      Effusion: 'Present',
+      Recommendation: 'TKA',
+    },
+    confidence: 98,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-physical-exam', 'req-surgeon-recommendation', 'req-functional-deficit'],
+    identityNote: 'Matched via DOB + last name across Epic (MRN 4821937)',
+  },
+
+  // --- PCP visit from Athena ---
+  {
+    id: 'ev-pcp-visit',
+    sourceSystemId: SYSTEM_IDS.ATHENA,
+    sourceSystemName: 'Athenahealth',
+    recordType: 'Office Visit',
+    date: '2026-02-12',
+    description: 'PCP follow-up — Dr. Chen. Managing knee OA conservatively. Tried Ibuprofen 800mg TID x 3 months with partial relief. Administered R knee corticosteroid injection (Depo-Medrol 80mg). HbA1c 7.8% — adjust Metformin. Discussed surgical referral.',
+    extractedValues: {
+      'NSAID Trial': 'Ibuprofen 800mg TID x 3 months',
+      Injection: 'Depo-Medrol 80mg, R knee',
+      HbA1c: '7.8%',
+      'Metformin Adjustment': '1000mg BID (increased)',
+    },
+    confidence: 93,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-conservative-failed', 'req-nsaid-trial', 'req-injection-trial'],
+    identityNote: 'Matched via DOB + last name across Athena (MRN ATH-2937)',
+  },
+
+  // --- Radiology report ---
+  {
+    id: 'ev-radiology',
+    sourceSystemId: SYSTEM_IDS.RADIOLOGY,
+    sourceSystemName: 'Radiology PACS',
+    recordType: 'Radiology Report',
+    date: '2026-02-20',
+    description: 'Weight-bearing AP and lateral radiographs, right knee. Kellgren-Lawrence Grade 3. Medial compartment joint space narrowing 2mm. Marginal osteophytes. Subchondral sclerosis. No acute fracture.',
+    extractedValues: {
+      'KL Grade': '3',
+      'Joint Space': '2mm medial compartment',
+      Osteophytes: 'Marginal, medial and lateral',
+      'Subchondral Sclerosis': 'Present',
+      Views: 'Weight-bearing AP/lateral',
+    },
+    confidence: 99,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-imaging', 'req-kl-grade'],
+  },
+
+  // --- Lab results from Epic ---
+  {
+    id: 'ev-labs-hba1c',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    sourceSystemName: 'Epic',
+    recordType: 'Lab Results',
+    date: '2026-02-10',
+    description: 'Pre-operative lab panel. HbA1c 7.8% (above target, clearance conditional). CBC within normal limits. BMP: Cr 0.9, eGFR >60. PT/INR normal. UA negative.',
+    extractedValues: {
+      HbA1c: '7.8%',
+      WBC: '7.2 K/uL',
+      Hgb: '13.1 g/dL',
+      Creatinine: '0.9 mg/dL',
+      eGFR: '>60',
+      'PT/INR': '1.0',
+    },
+    confidence: 99,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-medical-clearance', 'req-diabetes-managed'],
+  },
+
+  // --- Pre-op labs from Epic ---
+  {
+    id: 'ev-labs-preop',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    sourceSystemName: 'Epic',
+    recordType: 'Lab Results',
+    date: '2026-03-10',
+    description: 'Updated pre-op labs — 2 weeks before planned surgery. HbA1c 7.6% (improved). Type & screen completed. MRSA nasal screen negative. UA negative.',
+    extractedValues: {
+      HbA1c: '7.6%',
+      'Type & Screen': 'Completed',
+      'MRSA Screen': 'Negative',
+      UA: 'Negative',
+    },
+    confidence: 98,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-medical-clearance', 'req-diabetes-managed'],
+  },
+
+  // --- Pharmacy record ---
+  {
+    id: 'ev-pharmacy-nsaid',
+    sourceSystemId: SYSTEM_IDS.PHARMACY,
+    sourceSystemName: 'Pharmacy Feed',
+    recordType: 'Pharmacy Record',
+    date: '2026-02-15',
+    description: 'Ibuprofen 800mg dispensing history. Initial fill 2025-11-18, refill 2025-12-20, refill 2026-01-22. 90-day continuous use documented. Quantity: 90 tabs each fill.',
+    extractedValues: {
+      Medication: 'Ibuprofen 800mg',
+      'Fill 1': '2025-11-18',
+      'Fill 2': '2025-12-20',
+      'Fill 3': '2026-01-22',
+      'Continuous Use': '90 days',
+      Quantity: '90 tabs per fill',
+    },
+    confidence: 91,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-nsaid-trial', 'req-conservative-failed'],
+  },
+
+  // --- Additional PT detail from WebPT ---
+  {
+    id: 'ev-pt-modalities',
+    sourceSystemId: SYSTEM_IDS.WEBPT,
+    sourceSystemName: 'WebPT',
+    recordType: 'PT Session',
+    date: '2026-02-17',
+    description: 'Session 5 — Modalities: ultrasound R knee, NMES quads, manual therapy (patellar mobilization). Exercises: quad sets, SLR, mini squats, stationary bike 15 min. Patient tolerating well but limited by pain with resisted extension.',
+    extractedValues: {
+      Modalities: 'Ultrasound, NMES, manual therapy',
+      Exercises: 'Quad sets, SLR, mini squats, bike',
+      'Pain with Extension': 'Limited',
+      'Session Number': '5',
+    },
+    confidence: 92,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-pt-completed'],
+  },
+
+  // --- Surgical planning from Epic ---
+  {
+    id: 'ev-surgical-planning',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    sourceSystemName: 'Epic',
+    recordType: 'Office Visit',
+    date: '2026-03-12',
+    description: 'Pre-op surgical planning — Dr. Patel. BMI 31.2 (acceptable for TKA). Smoking cessation documented (quit 2019, 7 years). Discussed risks: infection, DVT, stiffness. Consent signed. Target surgery date 3/26/2026.',
+    extractedValues: {
+      BMI: '31.2',
+      'Smoking Status': 'Former — quit 2019',
+      'Surgery Date': '2026-03-26',
+      Consent: 'Signed',
+      'DVT Prophylaxis Plan': 'Enoxaparin 40mg daily',
+    },
+    confidence: 97,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-bmi-documented', 'req-smoking-status', 'req-surgeon-recommendation'],
+  },
+
+  // --- Corticosteroid injection detail from Athena ---
+  {
+    id: 'ev-injection-detail',
+    sourceSystemId: SYSTEM_IDS.ATHENA,
+    sourceSystemName: 'Athenahealth',
+    recordType: 'Office Visit',
+    date: '2025-12-05',
+    description: 'First corticosteroid injection — R knee. Depo-Medrol 80mg with 2mL lidocaine 1%. Medial approach. Patient reported 60% pain relief for 3 weeks, then return to baseline. Second injection administered 2026-02-12.',
+    extractedValues: {
+      Injection: 'Depo-Medrol 80mg + Lidocaine',
+      Approach: 'Medial',
+      'Relief Duration': '3 weeks',
+      'Relief Level': '60%',
+      'Injection Count': '2 total',
+    },
+    confidence: 89,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-injection-trial', 'req-conservative-failed'],
+  },
+
+  // --- Medical clearance from Epic ---
+  {
+    id: 'ev-medical-clearance',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    sourceSystemName: 'Epic',
+    recordType: 'Office Visit',
+    date: '2026-03-08',
+    description: 'Pre-operative medical clearance — Dr. Nguyen (Internal Medicine). Cardiac risk: low (revised cardiac risk index 0 points). DM type 2: HbA1c trending down 7.8→7.6%, acceptable for surgery. Cleared for TKA under general/spinal anesthesia.',
+    extractedValues: {
+      'Cardiac Risk': 'Low (RCRI 0)',
+      'Anesthesia Clearance': 'General or spinal',
+      'DM Status': 'Acceptable — HbA1c trending down',
+      Clearance: 'Approved',
+    },
+    confidence: 96,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-medical-clearance', 'req-diabetes-managed'],
+  },
+
+  // --- Weight-bearing X-ray from Athena (prior imaging for comparison) ---
+  {
+    id: 'ev-prior-imaging',
+    sourceSystemId: SYSTEM_IDS.ATHENA,
+    sourceSystemName: 'Athenahealth',
+    recordType: 'Radiology Report',
+    date: '2025-08-15',
+    description: 'Prior right knee radiograph (6 months earlier). KL Grade 2-3 at that time. Comparison shows interval progression of medial joint space narrowing. Documents disease progression over time.',
+    extractedValues: {
+      'KL Grade (prior)': '2-3',
+      'Interval Change': 'Progression of medial narrowing',
+      'Time Interval': '6 months',
+    },
+    confidence: 85,
+    confidenceLevel: 'medium',
+    linkedRequirementIds: ['req-imaging', 'req-kl-grade'],
+    identityNote: 'Cross-referenced with Radiology PACS via DOB + last name — same patient confirmed',
+  },
+
+  // --- BMI trending from Epic ---
+  {
+    id: 'ev-bmi-history',
+    sourceSystemId: SYSTEM_IDS.EPIC,
+    sourceSystemName: 'Epic',
+    recordType: 'Office Visit',
+    date: '2026-01-15',
+    description: 'Weight management follow-up. BMI trending: 32.8 (Oct 2025) → 31.9 (Dec 2025) → 31.2 (Jan 2026). Nutritional counseling documented. Weight optimization ongoing prior to surgery.',
+    extractedValues: {
+      'BMI Oct 2025': '32.8',
+      'BMI Dec 2025': '31.9',
+      'BMI Jan 2026': '31.2',
+      'BMI Trend': 'Decreasing',
+      'Nutritional Counseling': 'Documented',
+    },
+    confidence: 94,
+    confidenceLevel: 'high',
+    linkedRequirementIds: ['req-bmi-documented'],
+  },
+];

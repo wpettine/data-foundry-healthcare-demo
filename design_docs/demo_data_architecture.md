@@ -99,8 +99,7 @@ Single interface defining everything any screen can consume. Lives in `scenarios
 **Structure:**
 - `id` — scenario identifier string
 - `company` — display-level company info
-- `constants` — the full constants bag (system IDs, financial values, annotation counts, entity counts, concentration thresholds, schema stats, concept IDs)
-- Domain groups at the top level: `systems`, `annotations`, `matchCandidates`, `reconciliation`, `exhibits`, `waterfall`, `driftEvents`, `buyside`, `schemaTables`, etc.
+- Typed domain groups at the top level: `systems`, `annotations`, `matchCandidates`, `reconciliation`, `exhibits`, `waterfall`, `driftEvents`, `buyside`, `schemaTables`, etc. Constants files (`_constants.ts`) are an authoring convenience; at assembly time, values are mapped into these typed domain fields. Screens never access a raw constants object — they read fully typed fields via the context hook.
 - Nullable module fields for optional content: `holdPeriod: { ... } | null`, `navMigration: { ... } | null`
 - Layout/display config: `problemScreen`, `sellSideLayout`, `buySideLayout`, `topology`
 - `storeSnapshots` — pre-baked interaction states keyed by name
@@ -121,7 +120,7 @@ registerScenario('scenario-b', scenarioBData)
 
 **URL parameter contract:**
 - `?demo=<scenario-id>` — selects which scenario to load
-- `?scenario=<snapshot-name>` — loads a pre-baked store snapshot (e.g., `?scenario=midpoint`)
+- `?snapshot=<snapshot-name>` — loads a pre-baked store snapshot (e.g., `?snapshot=midpoint`)
 
 If no `demo` param is provided, fall back to the first registered scenario.
 
@@ -158,7 +157,7 @@ Examples: which tab is selected, table sort order, column resizing, accordion ex
 
 Pre-baked store states that allow jumping to a specific point in the demo flow (e.g., "sell-side complete" or "mid-diligence"). A `ScenarioSnapshot` interface mirrors each store's state shape (without actions). Snapshots are defined per-scenario, keyed by named entry points, and live inside `ScenarioData.storeSnapshots` so they can differ per scenario.
 
-**Loading mechanism:** The app entry point reads the `?scenario=<name>` URL parameter, looks up the matching snapshot, then calls `reset()` followed by `setState()` on each store. Stores for optional modules (matching nullable `ScenarioData` fields) are optional fields in the snapshot.
+**Loading mechanism:** The app entry point reads the `?snapshot=<name>` URL parameter, looks up the matching snapshot, then calls `reset()` followed by `setState()` on each store. Stores for optional modules (matching nullable `ScenarioData` fields) are optional fields in the snapshot.
 
 **Snapshot field names must stay in sync with store interfaces.** When adding a new field to a store, update the corresponding snapshot interface and all snapshot definitions.
 

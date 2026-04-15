@@ -627,7 +627,7 @@ registerScenario('scenario-b', scenarioBData);
 Support these URL parameters for jumping to specific demo states:
 
 - `?demo=scenario-id` — selects which scenario to load
-- `?scenario=state-name` — loads a store snapshot for a specific point in the demo flow
+- `?snapshot=state-name` — loads a store snapshot for a specific point in the demo flow
 
 This lets presenters skip to any point in the demo without clicking through every screen.
 
