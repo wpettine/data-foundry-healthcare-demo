@@ -43,10 +43,10 @@ const NAV_SECTIONS: Array<{ title: string; items: NavItem[] }> = [
     ],
   },
   {
-    title: 'ANALYTICS',
+    title: 'MACHINE LEARNING',
     items: [
       { label: 'Annotation Studio', path: '/annotation-studio', icon: <FileEdit size={18} />, module: 'analytics' },
-      { label: 'Model Builder', path: '/model-builder', icon: <Brain size={18} />, module: 'analytics' },
+      { label: 'Data Assembly', path: '/model-builder', icon: <Brain size={18} />, module: 'analytics' },
     ],
   },
 ];
