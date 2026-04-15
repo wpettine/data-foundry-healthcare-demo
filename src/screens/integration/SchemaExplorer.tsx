@@ -16,6 +16,7 @@ import { StatusBadge } from '../../components/feedback/StatusBadge';
 import { FilterChips, type FilterGroupDef } from '../../components/interactive/FilterChips';
 import { BulkActionBar } from '../../components/interactive/BulkActionBar';
 import { PaginationControls } from '../../components/interactive/PaginationControls';
+import { MultiSelectDropdown } from '../../components/interactive/MultiSelectDropdown';
 import ScreenContainer from '../../components/layout/ScreenContainer';
 import { useSchemaStore } from '../../store/schemaStore';
 import type { SchemaAnnotation } from '../../types/system';
@@ -67,6 +68,7 @@ export default function SchemaExplorer() {
     acceptField,
     filters,
     setFilter,
+    setSystemFilters,
     selectedFieldId,
     setSelectedFieldId,
   } = useSchemaStore();
@@ -97,7 +99,8 @@ export default function SchemaExplorer() {
   // Apply filters
   const filteredFields = useMemo(() => {
     return resolvedFields.filter((f) => {
-      if (filters.system !== 'all' && f.systemId !== filters.system) return false;
+      // System filter: empty array means "all", otherwise must be in selected systems
+      if (filters.systemIds.length > 0 && !filters.systemIds.includes(f.systemId)) return false;
       if (filters.status !== 'all') {
         const targetStatus = STATUS_FILTER_MAP[filters.status];
         if (targetStatus && f.resolvedStatus !== targetStatus) return false;
@@ -120,18 +123,9 @@ export default function SchemaExplorer() {
     [resolvedFields],
   );
 
-  // Filter chip groups
+  // Filter chip groups (Status and Confidence only - System uses MultiSelectDropdown)
   const filterGroups = useMemo<FilterGroupDef[]>(
     () => [
-      {
-        label: 'System',
-        options: [
-          { value: 'all', label: 'All' },
-          ...systems.map((s) => ({ value: s.id, label: s.name })),
-        ],
-        active: filters.system,
-        onChange: (v) => setFilter('system', v),
-      },
       {
         label: 'Status',
         options: [
@@ -155,7 +149,7 @@ export default function SchemaExplorer() {
         onChange: (v) => setFilter('confidence', v),
       },
     ],
-    [systems, filters, setFilter],
+    [filters, setFilter],
   );
 
   // Selected field for detail panel
@@ -244,7 +238,7 @@ export default function SchemaExplorer() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  }, [filters.system, filters.status, filters.confidence]);
+  }, [filters.systemIds, filters.status, filters.confidence]);
 
   // Handle selected row tracking when filters change
   useEffect(() => {
@@ -294,8 +288,17 @@ export default function SchemaExplorer() {
           </div>
         </div>
 
-        {/* Filter chips */}
-        <FilterChips groups={filterGroups} />
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-6">
+          <MultiSelectDropdown
+            label="Systems"
+            options={systems.map((s) => ({ value: s.id, label: s.name }))}
+            selected={filters.systemIds}
+            onChange={setSystemFilters}
+          />
+          <span className="h-4 w-px bg-gray-200" />
+          <FilterChips groups={filterGroups} />
+        </div>
 
         {/* Bulk action bar */}
         {highConfidencePendingCount > 0 && showBulkBar && (

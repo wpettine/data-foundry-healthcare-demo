@@ -16,10 +16,24 @@ export function RequirementCategory({
   onAcceptRequirement,
   onSelectRequirement,
 }: RequirementCategoryProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  // Auto-expand if category has any review or missing items
+  const hasReviewOrMissing = category.children.some(
+    (r) => r.status === 'review' || r.status === 'missing'
+  );
+  const [isExpanded, setIsExpanded] = useState(hasReviewOrMissing);
 
   const metCount = category.children.filter((r) => r.status === 'met').length;
+  const reviewCount = category.children.filter((r) => r.status === 'review').length;
+  const missingCount = category.children.filter((r) => r.status === 'missing').length;
   const totalCount = category.children.length;
+
+  // Badge color based on worst-case child status
+  let badgeClasses = 'bg-emerald-50 text-emerald-700';
+  if (missingCount > 0) {
+    badgeClasses = 'bg-red-50 text-red-700';
+  } else if (reviewCount > 0) {
+    badgeClasses = 'bg-amber-50 text-amber-700';
+  }
 
   return (
     <div className="border-b border-gray-100 last:border-b-0">
@@ -33,13 +47,7 @@ export function RequirementCategory({
           <ChevronRight size={16} className="text-gray-400" />
         )}
         <span className="flex-1 text-sm font-medium text-gray-900">{category.name}</span>
-        <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            metCount === totalCount
-              ? 'bg-emerald-50 text-emerald-700'
-              : 'bg-gray-100 text-gray-600'
-          }`}
-        >
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${badgeClasses}`}>
           {metCount}/{totalCount} met
         </span>
       </button>

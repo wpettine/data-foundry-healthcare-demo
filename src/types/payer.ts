@@ -10,7 +10,6 @@ export interface PayerCriterionCell {
   criterionName: string;
   requirement: string;
   status: 'met' | 'partial' | 'not-required';
-  patientId: string; // References Patient.id - each cell can have a different patient
 }
 
 export interface PayerDivergence {

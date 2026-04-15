@@ -1,4 +1,4 @@
-import type { PACase } from '../../types/pa';
+import type { PACase, PAEvidence } from '../../types/pa';
 import type { IdentityResolution } from '../../types/scenario';
 import { mulberry32 } from '../../utils/prng';
 import { SYSTEM_IDS, PAYER_IDS, LINKING_COLORS } from './_constants';
@@ -21,9 +21,46 @@ const heroCase: PACase = {
   surgeryDate: '2026-04-08',
   slaDeadline: '2026-03-26',
   assignedTo: 'Dr. Sarah Chen',
+  requestNumber: 'PA-2026-0342',
   requirements: HERO_REQUIREMENTS,
   evidence: HERO_EVIDENCE,
   identityResolution: heroPatient.identityResolution,
+  identityDetail: {
+    systems: [
+      {
+        systemId: SYSTEM_IDS.EPIC,
+        systemName: 'PCP — Epic',
+        patientId: 'MRN 7291034',
+        matchMethod: 'DOB + Last + Address',
+        confidence: 96.2,
+        verified: 'Auto',
+      },
+      {
+        systemId: SYSTEM_IDS.WEBPT,
+        systemName: 'PT — WebPT',
+        patientId: 'PT-4821',
+        matchMethod: 'DOB + Last',
+        confidence: 92.8,
+        verified: 'Auto',
+      },
+      {
+        systemId: SYSTEM_IDS.ATHENA,
+        systemName: 'Ortho — Athenahealth',
+        patientId: 'MRN 4821937',
+        matchMethod: 'Direct (primary)',
+        confidence: 0,
+        verified: '—',
+      },
+      {
+        systemId: SYSTEM_IDS.PHARMACY,
+        systemName: 'Pharmacy — Surescripts',
+        patientId: 'Rx-991284',
+        matchMethod: 'DOB + Last',
+        confidence: 98.1,
+        verified: 'Auto',
+      },
+    ],
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -158,6 +195,53 @@ function generateFillerPACases(): PACase[] {
       }),
     }));
 
+    // Generate sample evidence (3-8 records per case)
+    const evidenceCount = 3 + Math.floor(rand() * 6);
+    const evidence: PAEvidence[] = [];
+
+    const evidenceTemplates = [
+      { type: 'PCP Visit', system: SYSTEM_IDS.EPIC, systemName: 'PCP — Epic', desc: 'NSAID trial initiated' },
+      { type: 'PT Session', system: SYSTEM_IDS.WEBPT, systemName: 'PT — WebPT', desc: 'Physical therapy progress note' },
+      { type: 'Ortho Consult', system: SYSTEM_IDS.ATHENA, systemName: 'Ortho — Athenahealth', desc: 'Orthopedic consultation' },
+      { type: 'Lab Result', system: SYSTEM_IDS.EPIC, systemName: 'PCP — Epic', desc: 'Pre-operative labs' },
+      { type: 'Radiology', system: SYSTEM_IDS.RADIOLOGY, systemName: 'Radiology', desc: 'Weight-bearing X-rays' },
+      { type: 'Injection', system: SYSTEM_IDS.ATHENA, systemName: 'Ortho — Athenahealth', desc: 'Corticosteroid injection' },
+      { type: 'Pharmacy', system: SYSTEM_IDS.PHARMACY, systemName: 'Pharmacy — Surescripts', desc: 'NSAID prescription' },
+    ];
+
+    for (let e = 0; e < evidenceCount; e++) {
+      const template = evidenceTemplates[Math.floor(rand() * evidenceTemplates.length)];
+      const daysBeforeFiling = Math.floor(rand() * 90) + 10; // 10-100 days before
+      const evidenceDate = new Date(new Date(filedDate).getTime() - daysBeforeFiling * 24 * 60 * 60 * 1000);
+      const dateStr = evidenceDate.toISOString().split('T')[0];
+
+      const confidence = 0.92 + rand() * 0.07; // 92-99%
+      const confidenceLevel: 'high' | 'medium' | 'low' = confidence >= 0.95 ? 'high' : confidence >= 0.85 ? 'medium' : 'low';
+
+      // Link to some requirements
+      const linkedReqs: string[] = [];
+      requirements.forEach(cat => {
+        cat.children.forEach(req => {
+          if (req.status !== 'missing' && rand() > 0.7) {
+            linkedReqs.push(req.id);
+          }
+        });
+      });
+
+      evidence.push({
+        id: `evidence-filler-${i}-${e}`,
+        sourceSystemId: template.system,
+        sourceSystemName: template.systemName,
+        recordType: template.type,
+        date: dateStr,
+        description: template.desc,
+        extractedValues: {},
+        confidence,
+        confidenceLevel,
+        linkedRequirementIds: linkedReqs.slice(0, 2), // Max 2 linked requirements
+      });
+    }
+
     cases.push({
       id: `case-filler-${i}`,
       patientId: `patient-filler-${i}`,
@@ -169,7 +253,7 @@ function generateFillerPACases(): PACase[] {
       slaDeadline,
       assignedTo: doctor,
       requirements,
-      evidence: [],
+      evidence,
       identityResolution: identity,
     });
   }

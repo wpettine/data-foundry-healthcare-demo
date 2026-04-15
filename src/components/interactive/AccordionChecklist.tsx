@@ -35,6 +35,12 @@ export function AccordionChecklist({
     setExpandKey((k) => k + 1);
   }
 
+  function handleExpandFailing() {
+    // This will trigger a re-render with new key, causing categories to reinitialize
+    // Categories with review/missing will auto-expand due to their internal logic
+    setExpandKey((k) => k + 1);
+  }
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
@@ -42,6 +48,12 @@ export function AccordionChecklist({
           {totalMet}/{totalItems} requirements met
         </span>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleExpandFailing}
+            className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100"
+          >
+            Expand Failing
+          </button>
           <button
             onClick={handleExpandAll}
             className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"

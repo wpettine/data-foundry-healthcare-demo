@@ -1,5 +1,14 @@
 import type { IdentityResolution } from './scenario';
 
+export interface IdentitySystem {
+  systemId: string;
+  systemName: string;
+  patientId: string;
+  matchMethod: string;
+  confidence: number;
+  verified: string;
+}
+
 export interface PACase {
   id: string;
   patientId: string;
@@ -10,9 +19,13 @@ export interface PACase {
   surgeryDate: string;
   slaDeadline: string;
   assignedTo: string;
+  requestNumber?: string;
   requirements: PARequirementCategory[];
   evidence: PAEvidence[];
   identityResolution: IdentityResolution;
+  identityDetail?: {
+    systems: IdentitySystem[];
+  };
 }
 
 export interface PARequirementCategory {
@@ -42,6 +55,7 @@ export interface PAEvidence {
   id: string;
   sourceSystemId: string;
   sourceSystemName: string;
+  systemType?: 'pcp-emr' | 'pt' | 'ortho-emr' | 'pharmacy' | 'radiology';
   recordType: string;
   date: string;
   description: string;
@@ -50,4 +64,17 @@ export interface PAEvidence {
   confidenceLevel: 'high' | 'medium' | 'low';
   linkedRequirementIds: string[];
   identityNote?: string;
+  facility?: string;
+  recordDate?: string;
+  documentType?: string;
+  extractionDetails?: {
+    extractionConfidence: number;
+    semanticMatchConfidence: number;
+    originalTextSnippet: string;
+    highlightedSpans?: Array<{ start: number; end: number; field: string }>;
+    historicalAccuracy: string;
+  };
+  eventType?: 'duration' | 'point';
+  startDate?: string;
+  endDate?: string;
 }

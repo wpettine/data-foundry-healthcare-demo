@@ -24,12 +24,13 @@ export function StackedProgressBar({ segments, total }: StackedProgressBarProps)
           return (
             <div
               key={i}
+              className="transition-all duration-300 ease-in-out"
               style={{ width: `${widthPct}%`, backgroundColor: segment.color }}
             />
           );
         })}
       </div>
-      <p className="mt-1 text-xs text-gray-500">
+      <p className="mt-1 text-xs text-gray-500 transition-all duration-300">
         {metCount}/{total} met
       </p>
     </div>

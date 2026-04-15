@@ -25,84 +25,83 @@ function cell(
   criterionName: string,
   requirement: string,
   status: PayerCriterionCell['status'],
-  patientId: string,
 ): PayerCriterionCell {
-  return { id, criterionName, requirement, status, patientId };
+  return { id, criterionName, requirement, status };
 }
 
 // ---------------------------------------------------------------------------
-// BCBS MA
+// BCBS MA - evaluated for M.K. (67F, BMI 31.2, HbA1c 7.8%, LEFS 28/80, KL Grade 3)
 // ---------------------------------------------------------------------------
 const bcbs: PayerCriteria = {
   id: `payer-${PAYER_IDS.BCBS}-tka`,
   payerName: 'BCBS MA',
   procedureType: 'TKA',
   criteria: [
-    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.CONSERVATIVE}`, 'Conservative Therapy Duration', '≥12 weeks', 'met', 'patient-mk'),
-    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.BMI}`, 'BMI Threshold', '<42', 'met', 'patient-dt'),
-    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.HBA1C}`, 'HbA1c Threshold', '<9.0', 'met', 'patient-ag'),
-    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.SMOKING}`, 'Smoking Cessation', 'Documented status', 'met', 'patient-mk'),
-    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.KL_GRADE}`, 'KL Grade Minimum', '≥3', 'met', 'patient-sm'),
-    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.FUNCTIONAL}`, 'Functional Score Requirement', 'LEFS <40', 'met', 'patient-dt'),
-    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.IMAGING}`, 'Imaging Recency', '12 months', 'met', 'patient-ag'),
-    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.PEER_TO_PEER}`, 'Peer-to-Peer Required', 'No', 'not-required', 'patient-mk'),
+    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.CONSERVATIVE}`, 'Conservative Therapy Duration', '≥12 weeks', 'met'), // M.K. has ~16 weeks
+    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.BMI}`, 'BMI Threshold', '<42', 'met'), // M.K. BMI 31.2
+    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.HBA1C}`, 'HbA1c Threshold', '<9.0', 'met'), // M.K. 7.8%
+    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.SMOKING}`, 'Smoking Cessation', 'Documented status', 'met'), // M.K. former smoker, documented
+    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.KL_GRADE}`, 'KL Grade Minimum', '≥3', 'met'), // M.K. KL Grade 3
+    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.FUNCTIONAL}`, 'Functional Score Requirement', 'LEFS <40', 'met'), // M.K. LEFS 28/80
+    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.IMAGING}`, 'Imaging Recency', '12 months', 'met'), // Assumed recent imaging
+    cell(`${PAYER_IDS.BCBS}-${CRITERIA_IDS.PEER_TO_PEER}`, 'Peer-to-Peer Required', 'No', 'not-required'),
   ],
 };
 
 // ---------------------------------------------------------------------------
-// Aetna MA
+// Aetna MA - evaluated for M.K.
 // ---------------------------------------------------------------------------
 const aetna: PayerCriteria = {
   id: `payer-${PAYER_IDS.AETNA}-tka`,
   payerName: 'Aetna MA',
   procedureType: 'TKA',
   criteria: [
-    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.CONSERVATIVE}`, 'Conservative Therapy Duration', '≥3 months', 'met', 'patient-mk'),
-    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.BMI}`, 'BMI Threshold', '<40', 'met', 'patient-dt'),
-    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.HBA1C}`, 'HbA1c Threshold', '<8.0', 'partial', 'patient-ag'),
-    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.SMOKING}`, 'Smoking Cessation', '30-day cessation', 'met', 'patient-mk'),
-    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.KL_GRADE}`, 'KL Grade Minimum', '≥3', 'met', 'patient-sm'),
-    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.FUNCTIONAL}`, 'Functional Score Requirement', 'KOOS <50', 'met', 'patient-dt'),
-    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.IMAGING}`, 'Imaging Recency', '12 months', 'met', 'patient-ag'),
-    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.PEER_TO_PEER}`, 'Peer-to-Peer Required', 'If denied', 'not-required', 'patient-mk'),
+    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.CONSERVATIVE}`, 'Conservative Therapy Duration', '≥3 months', 'met'), // M.K. has ~16 weeks (4 months)
+    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.BMI}`, 'BMI Threshold', '<40', 'met'), // M.K. BMI 31.2
+    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.HBA1C}`, 'HbA1c Threshold', '<8.0', 'partial'), // M.K. 7.8% - borderline, may need review
+    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.SMOKING}`, 'Smoking Cessation', '30-day cessation', 'met'), // M.K. former smoker (sufficient time)
+    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.KL_GRADE}`, 'KL Grade Minimum', '≥3', 'met'), // M.K. KL Grade 3
+    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.FUNCTIONAL}`, 'Functional Score Requirement', 'KOOS <50', 'met'), // M.K. LEFS 28/80 indicates significant impairment
+    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.IMAGING}`, 'Imaging Recency', '12 months', 'met'),
+    cell(`${PAYER_IDS.AETNA}-${CRITERIA_IDS.PEER_TO_PEER}`, 'Peer-to-Peer Required', 'If denied', 'not-required'),
   ],
 };
 
 // ---------------------------------------------------------------------------
-// United
+// United - evaluated for M.K.
 // ---------------------------------------------------------------------------
 const united: PayerCriteria = {
   id: `payer-${PAYER_IDS.UNITED}-tka`,
   payerName: 'United',
   procedureType: 'TKA',
   criteria: [
-    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.CONSERVATIVE}`, 'Conservative Therapy Duration', '≥90 days', 'met', 'patient-mk'),
-    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.BMI}`, 'BMI Threshold', 'No requirement', 'not-required', 'patient-dt'),
-    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.HBA1C}`, 'HbA1c Threshold', '<8.5', 'met', 'patient-ag'),
-    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.SMOKING}`, 'Smoking Cessation', 'No requirement', 'not-required', 'patient-mk'),
-    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.KL_GRADE}`, 'KL Grade Minimum', '≥3', 'met', 'patient-sm'),
-    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.FUNCTIONAL}`, 'Functional Score Requirement', 'Any standardized', 'met', 'patient-dt'),
-    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.IMAGING}`, 'Imaging Recency', '6 months', 'partial', 'patient-ag'),
-    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.PEER_TO_PEER}`, 'Peer-to-Peer Required', 'If denied', 'not-required', 'patient-mk'),
+    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.CONSERVATIVE}`, 'Conservative Therapy Duration', '≥90 days', 'met'), // M.K. has ~16 weeks (112 days)
+    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.BMI}`, 'BMI Threshold', 'No requirement', 'not-required'),
+    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.HBA1C}`, 'HbA1c Threshold', '<8.5', 'met'), // M.K. 7.8%
+    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.SMOKING}`, 'Smoking Cessation', 'No requirement', 'not-required'),
+    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.KL_GRADE}`, 'KL Grade Minimum', '≥3', 'met'), // M.K. KL Grade 3
+    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.FUNCTIONAL}`, 'Functional Score Requirement', 'Any standardized', 'met'), // M.K. has LEFS documented
+    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.IMAGING}`, 'Imaging Recency', '6 months', 'partial'), // May need updated imaging for 6-month requirement
+    cell(`${PAYER_IDS.UNITED}-${CRITERIA_IDS.PEER_TO_PEER}`, 'Peer-to-Peer Required', 'If denied', 'not-required'),
   ],
 };
 
 // ---------------------------------------------------------------------------
-// Humana MA
+// Humana MA - evaluated for M.K.
 // ---------------------------------------------------------------------------
 const humana: PayerCriteria = {
   id: `payer-${PAYER_IDS.HUMANA}-tka`,
   payerName: 'Humana MA',
   procedureType: 'TKA',
   criteria: [
-    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.CONSERVATIVE}`, 'Conservative Therapy Duration', '≥6 months', 'partial', 'patient-mk'),
-    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.BMI}`, 'BMI Threshold', '<40', 'met', 'patient-dt'),
-    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.HBA1C}`, 'HbA1c Threshold', '<8.0', 'partial', 'patient-ag'),
-    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.SMOKING}`, 'Smoking Cessation', '90-day cessation', 'met', 'patient-mk'),
-    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.KL_GRADE}`, 'KL Grade Minimum', '≥3', 'met', 'patient-sm'),
-    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.FUNCTIONAL}`, 'Functional Score Requirement', 'WOMAC >50', 'partial', 'patient-dt'),
-    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.IMAGING}`, 'Imaging Recency', '12 months', 'met', 'patient-ag'),
-    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.PEER_TO_PEER}`, 'Peer-to-Peer Required', 'Yes, always', 'partial', 'patient-mk'),
+    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.CONSERVATIVE}`, 'Conservative Therapy Duration', '≥6 months', 'partial'), // M.K. has ~16 weeks (4 months) - needs 2 more months
+    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.BMI}`, 'BMI Threshold', '<40', 'met'), // M.K. BMI 31.2
+    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.HBA1C}`, 'HbA1c Threshold', '<8.0', 'partial'), // M.K. 7.8% - borderline
+    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.SMOKING}`, 'Smoking Cessation', '90-day cessation', 'met'), // M.K. former smoker (sufficient time)
+    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.KL_GRADE}`, 'KL Grade Minimum', '≥3', 'met'), // M.K. KL Grade 3
+    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.FUNCTIONAL}`, 'Functional Score Requirement', 'WOMAC >50', 'partial'), // M.K. uses LEFS not WOMAC - scoring mismatch
+    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.IMAGING}`, 'Imaging Recency', '12 months', 'met'),
+    cell(`${PAYER_IDS.HUMANA}-${CRITERIA_IDS.PEER_TO_PEER}`, 'Peer-to-Peer Required', 'Yes, always', 'partial'), // Required step, not yet scheduled
   ],
 };
 
@@ -150,13 +149,13 @@ const divergences: PayerDivergence[] = [
 // ---------------------------------------------------------------------------
 // Export
 // ---------------------------------------------------------------------------
-const referencedPatients = PATIENTS.filter((p) =>
-  ['patient-mk', 'patient-dt', 'patient-ag', 'patient-sm'].includes(p.id),
-);
+const referencedPatient = PATIENTS.find((p) => p.id === 'patient-mk')!;
 
 export const PAYER_CRITERIA_SET: PayerCriteriaSet = {
+  patientId: 'patient-mk',
+  procedureType: 'TKA',
   payers: [bcbs, aetna, united, humana],
   procedures: ['TKA'],
   divergences,
-  patients: referencedPatients,
+  patients: [referencedPatient],
 };
